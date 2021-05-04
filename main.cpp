@@ -10,17 +10,30 @@
 using namespace std;
 
 mt19937 gen(time(0));
-uniform_real_distribution<> urd(-1, 1);
+uniform_real_distribution<> urd(-1,1);
 
 class NeuronNetwork
 {
     struct Neuron{
         double value;
-        Neuron(double value):value(value){}
+        double delta;
+        Neuron(double value):value(value),delta(0){}
         void ActivateBySig()
         {
-            value = (1 / (1 + pow(2.71828, -value)))*2-1;
+            value = (1 / (1 + pow(2.71828, -value)));
         }
+        double DerSig()
+        {
+            return (1-value)*((1-value)*value);
+        }
+    };
+
+    struct Weight
+    {
+        double value;
+        double delta;
+        Weight():value(0),delta(0){}
+        Weight(double value):value(value),delta(0){}
     };
 
     struct Layer
@@ -39,14 +52,14 @@ public:
     int layerCount;
     vector<int> layersSize;
     vector<Layer> layers;
-    vector<vector<vector<double>>> weight;
+    vector<vector<vector<Weight>>> weight;
     vector<double> output;
     NeuronNetwork(vector<int> _layersSize)
     {
         layerCount = _layersSize.size();
         layersSize = _layersSize;
         output = vector<double>(_layersSize[layerCount-1]);
-        weight = vector<vector<vector<double>>>(layerCount-1);
+        weight = vector<vector<vector<Weight>>>(layerCount-1);
 
         for(int x = 0; x < layerCount;x++)
             layers.push_back(Layer(layersSize[x]));
@@ -54,10 +67,10 @@ public:
         int k = 0;
         for(int x = 0; x < layerCount-1;x++)
         {
-            weight[x] = vector<vector<double>>(layersSize[x]);
+            weight[x] = vector<vector<Weight>>(layersSize[x]);
             for(int y = 0; y < layersSize[x];y++)
             {
-                weight[x][y] = vector<double>(layersSize[x+1]);
+                weight[x][y] = vector<Weight>(layersSize[x+1]);
                 for(int z = 0; z < layersSize[x+1];z++)
                 {
                     weight[x][y][z] = urd(gen);
@@ -78,13 +91,13 @@ public:
         }
         for(int x = 0; x < layerCount-1;x++)
         {
-            for(int y = 0; y < layersSize[x];y++)
+            for(int y = 0; y < layersSize[x+1];y++)
             {
-                for(int z = 0; z < layersSize[x+1];z++)
+                for(int z = 0; z < layersSize[x];z++)
                 {
-                    layers[x+1].layer[z].value += (layers[x].layer[y].value*weight[x][y][z]);
-                    layers[x+1].layer[z].ActivateBySig();
+                    layers[x+1].layer[y].value += (layers[x].layer[z].value*weight[x][z][y].value);
                 }
+                layers[x+1].layer[y].ActivateBySig();
             }
         }
         for(int x = 0; x < layersSize[layerCount-1]; x++)
@@ -92,40 +105,52 @@ public:
             //layers[layerCount-1].layer[x].ActivateBySig();
             output[x] = layers[layerCount-1].layer[x].value;
         }
-        return layers[layerCount-1].layer[0].value;
+        return output[0];
     }
 
-    void RandomRelearn()
+private:
+    double _output;
+    double _ideal;
+public:
+    void MORRelearn(vector<vector<double>> tests,double E,double a)
     {
-        for(int x = 0; x < layerCount-1;x++)
+        for(int z = 0; z < tests.size();z++)
         {
-            for(int y = 0; y < layersSize[x];y++)
+            _output = Go(tests[z]);
+            _ideal = tests[z][tests[z].size()-1];
+            layers[layers.size()-1].layer[0].delta = (_ideal-_output)*((1-_output)*_output);
+            for(int x = layers.size()-2;x > 0;x--)
             {
-                for(int z = 0; z < layersSize[x+1];z++)
+                for(int y = 0; y < layersSize[x]; y++)
                 {
-                        weight[x][y][z] += urd(gen);
+                    //cout << x << endl;
+                    double sumOut = 0;
+                    for(int c = 0; c < layersSize[x+1];c++)
+                        sumOut += weight[x][y][c].value * layers[x+1].layer[c].delta;
+                    //cout << x << endl;
+                    layers[x].layer[y].delta = ((1-layers[x].layer[y].value)*layers[x].layer[y].value)*sumOut;
+                    for(int c = 0; c < layersSize[x+1];c++)
+                    {
+                        weight[x][y][c].value += E*layers[x].layer[y].value*layers[x+1].layer[c].delta+
+                                a*weight[x][y][c].delta;
+                        weight[x][y][c].delta = E*layers[x].layer[y].value*layers[x+1].layer[c].delta+
+                                a*weight[x][y][c].delta;
+                    }
                 }
             }
         }
     }
 
-    void RandomRelearn2()
+    double getWrong(vector<vector<double>> tests)
     {
-        for(int x = 0; x < layerCount-1;x++)
+        double errorValue = 0;
+        for(int x = 0; x < tests.size();x++)
         {
-            for(int y = 0; y < layersSize[x];y++)
-            {
-                for(int z = 0; z < layersSize[x+1];z++)
-                {
-                    weight[x][y][z] += urd(gen);
-                }
-            }
+            //cout <<tests[x][tests[x].size()-1] << "  t:n  " << Go(tests[x]) << endl;
+            errorValue += pow(tests[x][tests[x].size()-1]-Go(tests[x]),2);
         }
-    }
-
-    double getWrong()
-    {
-        return 0;
+        errorValue/=tests.size();
+        return errorValue;
     }
 
     void PrintNeurons()
@@ -151,7 +176,7 @@ public:
                 cout << "Neuron: " << y << endl;
                 for(int z = 0; z < layersSize[x+1];z++)
                 {
-                    cout << weight[x][y][z] << " ";
+                    cout << weight[x][y][z].value << " ";
                 }
                 cout << endl;
             }
@@ -179,7 +204,7 @@ public:
             {
                 for(int z = 0; z < weight[x][y].size();z++)
                 {
-                    fout << weight[x][y][z] << " ";
+                    fout << weight[x][y][z].value << " ";
                 }
             }
         }
@@ -196,7 +221,7 @@ public:
             {
                 for(int z = 0; z < weight[x][y].size();z++)
                 {
-                    fout >> weight[x][y][z];
+                    fout >> weight[x][y][z].value;
                 }
             }
         }
@@ -204,94 +229,17 @@ public:
     }
 };
 
-double minErrorsum = 4;
-vector<vector<vector<double>>> bestWeight;
-int timer_old = 0;
-int timer_new = 0;
-double maxCorrectAns = 0;
 
-void Teach(NeuronNetwork nn)
-{
-    const double wrongParam = 0.1;
-    int testCount = 4;
-    int inputCount = 2;
-    int inputAnsCount = 1;
-    ifstream fin("tests.txt");
-    vector<vector<double>> tests;
-    for(int x = 0; x < testCount; x++)
-    {
-        vector<double> test;
-        double value1;
-        string value2;
-        for(int y = 0; y < inputCount + inputAnsCount;y++)
-        {
-            fin >> value1;
-            test.push_back(value1);
-        }
-        tests.push_back(test);
-    }
-    //Тесты
-    //Обучение
-    long long int AgeCount = 0;
-    double errorValue = 0;
-    int correctAns = 0;
-    double errorSumm = 0;
-    int iterWithoutchange = 0;
-    urd = uniform_real_distribution<>(-1000000,1000000);
-    do
-    {
-        AgeCount++;
-        correctAns = 0;
-        errorSumm = 0;
-        nn.weight = bestWeight;
-        nn.RandomRelearn();
-        for(int x = 0; x < testCount;x++)
-        {
-            nn.Go(tests[x]);
-            errorValue = pow(nn.output[0] - tests[x][tests[x].size()-1],2);
-            errorSumm += errorValue;
-            if(errorValue < wrongParam)
-                correctAns++;
-        }
-        errorValue/=testCount;
-        if(errorSumm < minErrorsum)
-        {
-            maxCorrectAns = correctAns;
-            minErrorsum = errorSumm;
-            iterWithoutchange = 0;
-            cout << "FIND " << minErrorsum << endl;
-        }
-
-        if(AgeCount == 100000)
-        {
-          iterWithoutchange++;
-          timer_old = timer_new;
-          timer_new = clock();
-          cout << "Correct Ansver: " << maxCorrectAns << " Min ErorSum " << minErrorsum
-               << " TIME: " << clock()-timer_old << endl;
-          AgeCount = 0;
-        }
-        if(maxCorrectAns == 4)
-        {
-            cout <<"END"<< endl;
-            nn.weight = bestWeight;
-            nn.SaveWeight("2.txt");
-            exit(0);
-            break;
-        }
-    }
-    while(true);
-}
 
 
 int main()
 { 
-    ifstream fin("core.txt");
+    ifstream fin("core.txt");   //Загружаем кол-во ядер
     int CORE_VALUE = 1;
     fin >> CORE_VALUE;
     fin.close();
 
-    fin = ifstream("struct.txt");
+    fin = ifstream("struct.txt"); //Загружаем структура сети
     vector<int> INPUT;
     int c = 1;
     while(fin >> c)
@@ -301,9 +249,48 @@ int main()
     fin.close();
 
     NeuronNetwork nn(INPUT);
-    nn.LoadWeight("1.txt");
 
+    int testCount = 4;
+    int inputCount = 2;
 
+    fin = ifstream("tests.txt");
+    vector<vector<double>> tests;
+
+    for(int x = 0; x < testCount; x++)
+    {
+        vector<double> test;
+        double value1;
+        string value2;
+        for(int y = 0; y < inputCount + 1;y++)
+        {
+            fin >> value1;
+            test.push_back(value1);
+        }
+        tests.push_back(test);
+    }
+
+    cout << nn.getWrong(tests) << endl;
+    double min = 4;
+    int k = 0;
+    while(true)
+    {
+        k++;
+        nn.MORRelearn(tests,0.7,0.6);
+        double wrong = nn.getWrong(tests);
+        if(wrong < min)
+        {
+            min = wrong;
+        }
+        if(k == 100000)
+        {
+            if(min < 0.01)
+                break;
+            cout << min << endl;
+            k=0;
+        }
+    }
+    nn.SaveWeight("weight.txt");
+    /*
     vector<NeuronNetwork> NNL;
     for(int x = 0; x < CORE_VALUE;x++)
         NNL.push_back(NeuronNetwork(INPUT));
@@ -317,17 +304,18 @@ int main()
     {
         NNT[x].join();
     }
+    */
 
-
+    nn.PrintWeight();
     while(true)
     {
         cout << "INPUT 2 NUMBER:" << endl;
         double value1,value2;
         cin >> value1 >> value2;
         vector<double> a = {double(value1),double(value2)};
-        //cout << nn.Go(a) << endl;
+        cout << nn.Go(a) << endl;
         cout << endl;
-        //nn.PrintNeurons();
+        nn.PrintNeurons();
 
     }
     return 0;
