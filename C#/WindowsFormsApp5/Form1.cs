@@ -40,12 +40,14 @@ namespace WindowsFormsApp5
                 gr.FillEllipse(brush1, e.X, e.Y,
                    15, 15);
                 pictureBox1.Refresh();
+                //NEURONDROW();
             }
             if (e.Button == MouseButtons.Right)
             {
                 gr.FillEllipse(brush2, e.X, e.Y,
                     15,15);
                 pictureBox1.Refresh();
+                //NEURONDROW();
             }
             old_x = e.X;
             old_y = e.Y;
@@ -91,51 +93,7 @@ namespace WindowsFormsApp5
 
         private void button4_Click(object sender, EventArgs e)
         {
-            try
-            {
-                Logs.Text = "";
-                FileStream file1 = new FileStream(pathBox.Text, FileMode.OpenOrCreate); //создаем файловый поток
-                StreamReader reader = new StreamReader(file1);
-                FileStream file2 = new FileStream("logs.txt", FileMode.OpenOrCreate); //создаем файловый поток
-                StreamWriter writer = new StreamWriter(file2);
-                int[] str = (structBox.Text.Split(' ').Select(s => int.Parse(s)).ToArray());
-                nn = new NeuralNet.NeuronNetwork(str);
-                List<List<double>> tests = new List<List<double>>();
-                while (!reader.EndOfStream)
-                {
-                    tests.Add(reader.ReadLine().Split(' ').Select(x => double.Parse(x)).ToList());
-                }
-                reader.Close();
-                int c = 0;
-                double error = 0;
-                long co = 0;
-                double E = Convert.ToDouble(eBox.Text);
-                double a = Convert.ToDouble(aBox.Text);
-                while (true)
-                {
-                    nn.MORRelearn(tests, E, a);
-                    error = nn.getWrong(tests);
-                    if (c == 10)
-                    {
-                        writer.WriteLine("Generation: " + co + " : " +error);
-                        c = 0;
-                    }
-                    if (error < 0.1)
-                    {
-                        Logs.Text += "НЕЙРОСЕТЬ ОБУЧЕНА!";
-                        Logs.Text += "\nОшибка: " + error;
-                        Logs.Text += "\nКол-во циклов обучения:" + co;
-                        writer.Close();
-                        return;
-                    }
-                    c++;
-                    co++;
-                }
-            }
-            catch(Exception a)
-            {
-                MessageBox.Show(a.Message);
-            }
+         
         }
 
         void Learn()
@@ -170,6 +128,11 @@ namespace WindowsFormsApp5
         }
 
         private void button8_Click(object sender, EventArgs e)
+        {
+            NEURONDROW();
+        }
+
+        private void NEURONDROW()
         {
             List<double> test = new List<double>();
             Bitmap a = new Bitmap(pictureBox1.Image, 64, 64);

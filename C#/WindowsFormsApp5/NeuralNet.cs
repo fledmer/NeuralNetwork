@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Windows.Forms;
+
 
 namespace WindowsFormsApp5
 {
@@ -103,37 +105,6 @@ namespace WindowsFormsApp5
                 return output;
             }
             double _ideal;
-            public void MORRelearn(List<List<double>> tests, double E, double a)
-            {
-                for (int z = 0; z < tests.Count(); z++)
-                {
-                    Go(tests[z]);
-                    for (int x = 0; x < layers[layers.Count() - 1].layer.Count(); x++)
-                    {
-                        _ideal = tests[z][layers[0].layer.Count() + x];
-                        layers[layers.Count() - 1].layer[x].delta = (_ideal - output[x]) * ((1 - output[x]) * output[x]);
-                    }
-                    for (int x = layers.Count() - 2; x > 0; x--)
-                    {
-                        for (int y = 0; y < layersSize[x]; y++)
-                        {
-                            double sumOut = 0;
-                            for (int c = 0; c < layersSize[x + 1]; c++)
-                            {
-                                sumOut += weights[x][y][c].value * layers[x + 1].layer[c].delta;
-                            }
-                            layers[x].layer[y].delta = ((1 - layers[x].layer[y].value) * layers[x].layer[y].value) * sumOut;
-                            for (int c = 0; c < layersSize[x + 1]; c++)
-                            {
-                                weights[x][y][c].value += ((E * layers[x].layer[y].value * layers[x + 1].layer[c].delta) +
-                                    (a * weights[x][y][c].delta));
-                                weights[x][y][c].delta = ((E * layers[x].layer[y].value * layers[x + 1].layer[c].delta) +
-                                    (a * weights[x][y][c].delta));
-                            }
-                        }
-                    }
-                }
-            }
 
             public double getWrong(List<List<double>> tests)
             {
@@ -184,6 +155,7 @@ namespace WindowsFormsApp5
                 StreamReader reader = new StreamReader(file1);
                 string[] a = reader.ReadToEnd().Trim(' ').Replace('.',',').Split(' ');
                 int c = 0;
+                double summ = 0;
                 for (int x = 0; x < weights.Count; x++)
                 {
                     for (int y = 0; y < weights[x].Count; y++)
@@ -191,10 +163,12 @@ namespace WindowsFormsApp5
                         for (int z = 0; z < weights[x][y].Count; z++)
                         {
                             weights[x][y][z].value = Convert.ToDouble(a[c]);
+                            summ += Convert.ToDouble(a[c]);
                             c++;
                         }
                     }
                 }
+                MessageBox.Show(" " + summ);
                 reader.Close();
             }
         }
