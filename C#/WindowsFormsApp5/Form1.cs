@@ -101,35 +101,53 @@ namespace WindowsFormsApp5
 
         }
 
-        private void button5_Click(object sender, EventArgs e)
+        private void button6_Click(object sender, EventArgs e)
         {
             try
             {
-                outBox.Text = "";
-                double[] out1 = nn.Go(inBox.Text.Split(' ').Select(x => double.Parse(x)).ToList());
-                for (int x = 0; x < out1.Length; x++)
-                    outBox.Text += out1[x] + " ";
-            }
-            catch { }
-        }
-
-        private void button6_Click(object sender, EventArgs e)
-        {
                 int[] str = (structBox.Text.Split(' ').Select(s => int.Parse(s)).ToArray());
                 nn = new NeuralNet.NeuronNetwork(str);
-                nn.LoadWeight(pathBox2.Text);
-                nn.SaveWeight("test1.txt");
+            }
+            catch
+            {
+                MessageBox.Show("Невозможно создать нейросеть");
+            }
+            try
+            {
+                
+                    nn.LoadWeight(pathBox2.Text);
+                    nn.SaveWeight("test1.txt");
+                
+            }
+            catch
+            {
+                MessageBox.Show("Невозможно загрузить веса");
+            }
         }
 
         private void button7_Click(object sender, EventArgs e)
         {
-            int[] str = (structBox.Text.Split(' ').Select(s => int.Parse(s)).ToArray());
-            nn = new NeuralNet.NeuronNetwork(str);
+            try
+            {
+                int[] str = (structBox.Text.Split(' ').Select(s => int.Parse(s)).ToArray());
+                nn = new NeuralNet.NeuronNetwork(str);
+            }
+            catch
+            {
+                MessageBox.Show("ERROR");
+            }
         }
 
         private void button8_Click(object sender, EventArgs e)
         {
-            NEURONDROW();
+            try
+            {
+                NEURONDROW();
+            }
+            catch
+            {
+                MessageBox.Show("ERROR");
+            }
         }
 
         private void NEURONDROW()
@@ -145,8 +163,38 @@ namespace WindowsFormsApp5
             }
             nn.Go(test);
             outLabel.Text = "";
-            for (int x = 0; x < nn.output.Length; x++)
-                outLabel.Text += Convert.ToChar(x + 65) + " : " + nn.output[x].ToString("0.00") + " \n";
+            label1.Text = "A: " + nn.output[0].ToString("0.00");
+            label4.Text = "B: " + nn.output[1].ToString("0.00");
+            label6.Text = "C:" + nn.output[2].ToString("0.00");
+            label5.Text = "D: " + nn.output[3].ToString("0.00");
+            label10.Text = "E: " + nn.output[4].ToString("0.00");
+            label9.Text = "F: " + nn.output[5].ToString("0.00");
+            label8.Text = "G: " + nn.output[6].ToString("0.00");
+            label7.Text = " H: " + nn.output[7].ToString("0.00");
+            label18.Text = "I: " + nn.output[8].ToString("0.00");
+            label17.Text = "J: " + nn.output[9].ToString("0.00");
+            label16.Text = "K: " + nn.output[10].ToString("0.00");
+            label15.Text = "I: " + nn.output[11].ToString("0.00");
+            label14.Text = "M: " + nn.output[12].ToString("0.00");
+            label13.Text = "N: " + nn.output[13].ToString("0.00");
+            label12.Text = "O: " + nn.output[14].ToString("0.00");
+            label11.Text = "P: " + nn.output[15].ToString("0.00");
+            label26.Text = "Q: " + nn.output[16].ToString("0.00");
+            label25.Text = "R: " + nn.output[17].ToString("0.00");
+            label24.Text = "S: " + nn.output[18].ToString("0.00");
+            label23.Text = "T: " + nn.output[19].ToString("0.00");
+            label22.Text = "U: " + nn.output[20].ToString("0.00"); 
+            label21.Text = "V: " + nn.output[21].ToString("0.00");
+            label20.Text = "W: " + nn.output[22].ToString("0.00");
+            label19.Text = "X: " + nn.output[23].ToString("0.00");
+            label28.Text = "Y: " + nn.output[24].ToString("0.00");
+            label27.Text = "Z: " + nn.output[25].ToString("0.00");
+
+        }
+
+        private void label8_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

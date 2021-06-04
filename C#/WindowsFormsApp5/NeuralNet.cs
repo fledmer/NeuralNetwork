@@ -104,7 +104,6 @@ namespace WindowsFormsApp5
                 }
                 return output;
             }
-            double _ideal;
 
             public double getWrong(List<List<double>> tests)
             {
@@ -167,8 +166,7 @@ namespace WindowsFormsApp5
                             c++;
                         }
                     }
-                }
-                MessageBox.Show(" " + summ);
+                } 
                 reader.Close();
             }
         }
