@@ -12,16 +12,17 @@ using namespace std;
 
 int main()
 {
-    ifstream fin("core.txt");   //Загружаем кол-во ядер
+    //Загружаем кол-во ядер
+    ifstream fin("core.txt");
     int CORE_VALUE = 1;
     fin >> CORE_VALUE;
     fin.close();
 
-    fin = ifstream("struct.txt"); //Загружаем структура сети
+    //Загружаем структура сети
+    fin = ifstream("struct.txt");
     vector<int> INPUT;
     int c = 1;
-    while(fin >> c)
-    {
+    while(fin >> c){
         INPUT.push_back(c);
     }
     fin.close();
@@ -44,12 +45,10 @@ int main()
         }
         tests.push_back(test);
     }
-    cout << "CREATE" << endl;
+
     NeuralNet nn(INPUT);
     cout << "CREATE" << endl;
-    cout << nn.getWrong(tests) << endl;
-    cout << "a" << endl;
-    double min = 4;
+    cout << "Error value: " << nn.getWrong(tests) << endl;
     long int k = 0;
     nn.LoadWeight("weight.txt");
     while(k != 100)
@@ -59,13 +58,12 @@ int main()
         cout << nn.getWrong(tests) << endl;
     }
     nn.SaveWeight("weight.txt");
-    //nn.PrintWeight();
     string path;
-        cout << "Ready" << endl;
+    cout << "Ready" << endl;
     while(true)
     {
-        int a1,a2;
-        cout << "INPUT TEST PATH:" << endl;
+        int a1;
+        cout << "INPUT TEST:" << endl;
         vector<double> test;
         for(int x = 0; x < INPUT[INPUT.size()-1];x++)
         {
@@ -82,5 +80,3 @@ int main()
     }
     return 0;
 }
-// Напишем нейронную сеть способную ебашить оператор xor и сам проставлю коэфы
-// Потом попробую натренировать ее
